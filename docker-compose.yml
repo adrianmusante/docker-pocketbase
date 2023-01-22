@@ -1,0 +1,27 @@
+# This docker-compose is only for local
+version: '3.8'
+
+services:
+  pocketbase:
+    image: adrianmusante/pocketbase:0.0.0
+    container_name: pocketbase
+    build:
+      context: pocketbase
+    environment:
+      - POCKETBASE_DEBUG=${POCKETBASE_DEBUG:-true}
+      - POCKETBASE_PORT_NUMBER=3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./_local/data/pocketbase:/pocketbase
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
+      interval: 2s
+      timeout: 10s
+      retries: 10
+    networks:
+      - pocketbase_network
+
+networks:
+  pocketbase_network:
+    driver: bridge

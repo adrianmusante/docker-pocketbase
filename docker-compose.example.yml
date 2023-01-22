@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  pocketbase:
+    image: adrianmusante/pocketbase:latest
+    container_name: pocketbase
+    environment:
+      - POCKETBASE_PORT_NUMBER=3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - pocketbase:/pocketbase
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
+      interval: 2s
+      timeout: 10s
+      retries: 10
+    networks:
+      - pocketbase_network
+
+networks:
+  pocketbase_network:
+    driver: bridge
+
+volumes:
+  pocketbase:
+    driver: local

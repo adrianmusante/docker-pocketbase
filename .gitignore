@@ -1,0 +1,10 @@
+.env
+docker-compose.override.yml
+_local/
+# Log file
+*.log
+
+.idea/
+*.iml
+
+.DS_Store

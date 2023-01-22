@@ -1,0 +1,45 @@
+ARG POCKETBASE_VERSION=0.11.3
+ARG BUILD_DIR=/pb_build
+FROM alpine:3.17 as base
+
+FROM base as build
+
+RUN apk add --no-cache unzip
+
+ARG POCKETBASE_VERSION
+ARG BUILD_DIR
+
+ADD https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_linux_amd64.zip /tmp/pocketbase.zip
+RUN unzip /tmp/pocketbase.zip -d $BUILD_DIR/
+
+
+FROM base as final
+
+ARG uid=1001
+ARG gid=1001
+ARG user=pocketbase
+ARG group=pocketbase
+ARG POCKETBASE_WORKDIR=/pocketbase
+
+ARG POCKETBASE_VERSION
+ARG BUILD_DIR
+
+ENV POCKETBASE_VERSION=$POCKETBASE_VERSION \
+    POCKETBASE_WORKDIR=$POCKETBASE_WORKDIR \
+    POCKETBASE_HOME=/opt/pocketbase
+
+RUN apk add --no-cache ca-certificates curl \
+    && mkdir -p $POCKETBASE_HOME  \
+    && mkdir -p -m 777 "$POCKETBASE_WORKDIR" \
+    && addgroup -g ${gid} ${group} \
+    && adduser -u ${uid} -G ${group} -s /bin/sh -D ${user}
+
+COPY --from=build $BUILD_DIR $POCKETBASE_HOME
+COPY scripts $POCKETBASE_HOME/scripts
+RUN chmod -R 755 $POCKETBASE_HOME \
+    && ln -s $POCKETBASE_HOME/pocketbase /usr/local/bin/pocketbase
+
+USER $uid
+WORKDIR "$POCKETBASE_WORKDIR"
+
+ENTRYPOINT /opt/pocketbase/scripts/entrypoint.sh
