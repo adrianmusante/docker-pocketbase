@@ -1,6 +1,8 @@
-ARG POCKETBASE_VERSION=0.12.3
+ARG POCKETBASE_VERSION=0.13.0
 ARG BUILD_DIR=/pb_build
 FROM alpine:3.17 as base
+
+RUN apk add --no-cache ca-certificates curl
 
 FROM base as build
 
@@ -8,10 +10,15 @@ RUN apk add --no-cache unzip
 
 ARG POCKETBASE_VERSION
 ARG BUILD_DIR
+ARG TARGETPLATFORM
 
-ADD https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_linux_amd64.zip /tmp/pocketbase.zip
-RUN unzip /tmp/pocketbase.zip -d $BUILD_DIR/
-
+RUN case ${TARGETPLATFORM} in \
+         "linux/amd64")  PACKAGE_PLATFORM=linux_amd64  ;; \
+         "linux/arm64")  PACKAGE_PLATFORM=linux_arm64  ;; \
+         "linux/arm/v7") PACKAGE_PLATFORM=linux_armv7  ;; \
+    esac \
+    && curl -fsSL -o /tmp/pocketbase.zip https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_${PACKAGE_PLATFORM}.zip \
+    && unzip /tmp/pocketbase.zip -d $BUILD_DIR/
 
 FROM base as final
 
@@ -28,8 +35,7 @@ ENV POCKETBASE_VERSION=$POCKETBASE_VERSION \
     POCKETBASE_WORKDIR=$POCKETBASE_WORKDIR \
     POCKETBASE_HOME=/opt/pocketbase
 
-RUN apk add --no-cache ca-certificates curl \
-    && mkdir -p $POCKETBASE_HOME  \
+RUN mkdir -p $POCKETBASE_HOME  \
     && mkdir -p -m 777 "$POCKETBASE_WORKDIR" \
     && addgroup -g ${gid} ${group} \
     && adduser -u ${uid} -G ${group} -s /bin/sh -D ${user}
