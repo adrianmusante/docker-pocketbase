@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'main'
-      - 'MULTI_PLATFORM'
     tags:
       - 'v*'
 
