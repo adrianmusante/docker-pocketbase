@@ -12,5 +12,6 @@ fi
 exec pocketbase serve --http=0.0.0.0:$POCKETBASE_PORT_NUMBER \
   --dir "$POCKETBASE_DATA_DIR" \
   --publicDir "$POCKETBASE_PUBLIC_DIR" \
+  --hooksDir "$POCKETBASE_HOOK_DIR" \
   --migrationsDir "$POCKETBASE_MIGRATION_DIR" \
   $POCKETBASE_OPTS "$@"
