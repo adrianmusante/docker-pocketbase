@@ -1,5 +1,5 @@
 # This docker-compose is only for local
-version: '3.8'
+version: '3.9'
 
 services:
   pocketbase:
@@ -19,9 +19,8 @@ services:
       interval: 2s
       timeout: 10s
       retries: 10
-    networks:
-      - pocketbase_network
 
 networks:
-  pocketbase_network:
+  default:
+    name: pocketbase_network
     driver: bridge
