@@ -1,6 +1,6 @@
-ARG POCKETBASE_VERSION=0.19.4
+ARG POCKETBASE_VERSION=0.20.1
 ARG BUILD_DIR=/pb_build
-FROM alpine:3.18 as base
+FROM alpine:3.19 as base
 
 RUN apk add --no-cache ca-certificates curl
 

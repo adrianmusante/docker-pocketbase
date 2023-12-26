@@ -6,7 +6,7 @@ echo "Running PocketBase v$POCKETBASE_VERSION for user: $(id)"
 . "$POCKETBASE_HOME/scripts/libutil.sh"
 
 if is_boolean_yes "$POCKETBASE_DEBUG"; then
-  POCKETBASE_OPTS="--debug $POCKETBASE_OPTS"
+  POCKETBASE_OPTS="--dev $POCKETBASE_OPTS"
   set -x
 fi
 exec pocketbase serve --http=0.0.0.0:$POCKETBASE_PORT_NUMBER \
