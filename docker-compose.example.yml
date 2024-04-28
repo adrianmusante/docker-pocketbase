@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   pocketbase:
     image: adrianmusante/pocketbase:latest
