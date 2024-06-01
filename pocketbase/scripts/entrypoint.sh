@@ -1,9 +1,13 @@
 #!/bin/sh
+set -eo pipefail
 
 echo "Running PocketBase v$POCKETBASE_VERSION for user: $(id)"
 
 . "$POCKETBASE_HOME/scripts/pocketbase-env.sh"
-. "$POCKETBASE_HOME/scripts/libutil.sh"
+
+if [ -n "$POCKETBASE_ENCRYPTION_KEY" ]; then
+  POCKETBASE_OPTS="--encryptionEnv=POCKETBASE_ENCRYPTION_KEY $POCKETBASE_OPTS"
+fi
 
 if is_boolean_yes "$POCKETBASE_DEBUG"; then
   POCKETBASE_OPTS="--dev $POCKETBASE_OPTS"

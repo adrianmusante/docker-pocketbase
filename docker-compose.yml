@@ -8,6 +8,7 @@ services:
     environment:
       - POCKETBASE_DEBUG=${POCKETBASE_DEBUG:-true}
       - POCKETBASE_PORT_NUMBER=3000
+      - POCKETBASE_ENCRYPTION_KEY=${POCKETBASE_ENCRYPTION_KEY:-}
     ports:
       - "3000:3000"
     volumes:

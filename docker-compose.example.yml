@@ -1,25 +1,86 @@
 services:
+  
   pocketbase:
     image: adrianmusante/pocketbase:latest
     container_name: pocketbase
     environment:
       - POCKETBASE_PORT_NUMBER=3000
+      - POCKETBASE_ENCRYPTION_KEY=${POCKETBASE_ENCRYPTION_KEY:-}
     ports:
       - "3000:3000"
     volumes:
-      - pocketbase:/pocketbase
+      - pocketbase_data:/pocketbase
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
       interval: 2s
       timeout: 10s
       retries: 10
-    networks:
-      - pocketbase_network
+
+  pocketbase-secret-by-default:
+    image: adrianmusante/pocketbase:latest
+    container_name: pocketbase-secret-by-default
+    ports:
+      - "3001:8090"
+    volumes:
+      - pocketbase-secret-by-default_data:/pocketbase
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8090/api/health" ]
+      interval: 2s
+      timeout: 10s
+      retries: 10
+    secrets:
+      - POCKETBASE_ENCRYPTION_KEY
+      
+  pocketbase-secret-by-custom-name:
+    image: adrianmusante/pocketbase:latest
+    container_name: pocketbase-secret-by-custom-name
+    environment:
+      - POCKETBASE_ENCRYPTION_KEY_FILE=encryption_secret
+    ports:
+      - "3002:8090"
+    volumes:
+      - pocketbase-secret-by-custom-name_data:/pocketbase
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8090/api/health" ]
+      interval: 2s
+      timeout: 10s
+      retries: 10
+    secrets:
+      - encryption_secret
+  
+  pocketbase-secret-by-volume:
+    image: adrianmusante/pocketbase:latest
+    container_name: pocketbase-secret-by-volume
+    environment:
+      - POCKETBASE_ENCRYPTION_KEY_FILE=/path/to/secret.txt
+    ports:
+      - "3003:8090"
+    volumes:
+      - pocketbase-secret-by-volume_data:/pocketbase
+      - ./_local/secret.txt:/path/to/secret.txt:ro
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8090/api/health" ]
+      interval: 2s
+      timeout: 10s
+      retries: 10
+
+secrets:
+  POCKETBASE_ENCRYPTION_KEY:
+    file: ./_local/secret.txt
+  encryption_secret:
+    file: ./_local/secret.txt
+    
+volumes:
+  pocketbase_data:
+    driver: local
+  pocketbase-secret-by-default_data:
+    driver: local
+  pocketbase-secret-by-custom-name_data:
+    driver: local
+  pocketbase-secret-by-volume_data:
+    driver: local
 
 networks:
-  pocketbase_network:
+  default:
+    name: pocketbase_network
     driver: bridge
-
-volumes:
-  pocketbase:
-    driver: local

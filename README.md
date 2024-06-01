@@ -46,5 +46,11 @@ Available environment variables:
 
 ##### General configuration
 
+- `POCKETBASE_DEBUG`: Verbose mode. Default: **false**
 - `POCKETBASE_PORT_NUMBER`: PocketBase&trade; server port number. Default: **8090**
 - `POCKETBASE_OPTS`: Additional options for bootstrap server. No defaults.
+
+##### Encryption
+
+- `POCKETBASE_ENCRYPTION_KEY`: The variable is used to encrypt the applications settings in PocketBase's database. By default, these settings are stored as plain JSON text, which may not be suitable for production environments where security is a concern. When you set this variable to a value, PocketBase will use it to encrypt the settings before storing them in the database. This provides an additional layer of protection against unauthorized access to your application's sensitive data, such as OAuth2 client secrets and SMTP passwords. (ref.: [pocketbase.io](https://pocketbase.io/docs/going-to-production/#enable-settings-encryption))
+- `POCKETBASE_ENCRYPTION_KEY_FILE`: Alternative to `POCKETBASE_ENCRYPTION_KEY` environment variable. If Docker manages the secret, this variable is used to reference the name with which the secret was created. An absolute path can also be specified if the secret was mounted as a file using a volume. Default: **POCKETBASE_ENCRYPTION_KEY**
