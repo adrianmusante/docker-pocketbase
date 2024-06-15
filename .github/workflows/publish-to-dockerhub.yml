@@ -6,6 +6,9 @@ on:
       - 'main'
     tags:
       - 'v*'
+    paths: 
+      - '.github/workflows/**'
+      - 'pocketbase/**'
 
 jobs:
   docker:
