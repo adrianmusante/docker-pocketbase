@@ -54,3 +54,11 @@ Available environment variables:
 
 - `POCKETBASE_ENCRYPTION_KEY`: The variable is used to encrypt the applications settings in PocketBase's database. By default, these settings are stored as plain JSON text, which may not be suitable for production environments where security is a concern. When you set this variable to a value, PocketBase will use it to encrypt the settings before storing them in the database. This provides an additional layer of protection against unauthorized access to your application's sensitive data, such as OAuth2 client secrets and SMTP passwords. (ref.: [pocketbase.io](https://pocketbase.io/docs/going-to-production/#enable-settings-encryption))
 - `POCKETBASE_ENCRYPTION_KEY_FILE`: Alternative to `POCKETBASE_ENCRYPTION_KEY` environment variable. If Docker manages the secret, this variable is used to reference the name with which the secret was created. An absolute path can also be specified if the secret was mounted as a file using a volume. Default: **POCKETBASE_ENCRYPTION_KEY**
+
+##### Directories
+
+- `POCKETBASE_WORKDIR` Persistence base directory. Default: **/pocketbase**
+- `POCKETBASE_DATA_DIR` PocketBase data directory. Default: **${POCKETBASE_WORKDIR}/data**
+- `POCKETBASE_MIGRATION_DIR` The directory with the user defined migrations. Default: **${POCKETBASE_WORKDIR}/migrations**
+- `POCKETBASE_PUBLIC_DIR` The directory to serve static files. Default: **${POCKETBASE_WORKDIR}/public**
+- `POCKETBASE_HOOK_DIR` The directory with the JS app hooks. Default: **${POCKETBASE_WORKDIR}/hooks**
