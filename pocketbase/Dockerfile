@@ -1,10 +1,10 @@
 ARG POCKETBASE_VERSION=0.22.14
 ARG BUILD_DIR=/pb_build
-FROM alpine:3 as base
+FROM alpine:3 AS base
 
 RUN apk add --no-cache ca-certificates curl
 
-FROM base as build
+FROM base AS build
 
 RUN apk add --no-cache unzip
 
@@ -20,7 +20,7 @@ RUN case ${TARGETPLATFORM} in \
     && curl -fsSL -o /tmp/pocketbase.zip https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_${PACKAGE_PLATFORM}.zip \
     && unzip /tmp/pocketbase.zip -d $BUILD_DIR/
 
-FROM base as final
+FROM base AS final
 
 ARG uid=1001
 ARG gid=1001
