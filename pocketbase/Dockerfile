@@ -4,6 +4,7 @@ FROM alpine:3 AS base
 
 RUN apk add --no-cache ca-certificates curl
 
+
 FROM base AS build
 
 RUN apk add --no-cache unzip
@@ -19,6 +20,7 @@ RUN case ${TARGETPLATFORM} in \
     esac \
     && curl -fsSL -o /tmp/pocketbase.zip https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_${PACKAGE_PLATFORM}.zip \
     && unzip /tmp/pocketbase.zip -d $BUILD_DIR/
+
 
 FROM base AS final
 
