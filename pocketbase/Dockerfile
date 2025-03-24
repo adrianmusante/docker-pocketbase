@@ -1,5 +1,6 @@
 ARG POCKETBASE_VERSION=0.26.1
 ARG BUILD_DIR=/pb_build
+ARG BUILD_TAG
 FROM alpine:3 AS base
 
 RUN apk add --no-cache ca-certificates curl
@@ -53,5 +54,8 @@ RUN chmod -R 755 $POCKETBASE_HOME \
 
 USER $uid
 WORKDIR "$POCKETBASE_WORKDIR"
+
+ARG BUILD_TAG
+ENV BUILD_TAG="$BUILD_TAG"
 
 ENTRYPOINT ["/opt/pocketbase/scripts/entrypoint.sh"]

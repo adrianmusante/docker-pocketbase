@@ -5,10 +5,16 @@ services:
     container_name: pocketbase
     build:
       context: pocketbase
+      args:
+        BUILD_TAG: 0.0.0@000000
+    env_file:
+      - .env
     environment:
       - POCKETBASE_DEBUG=${POCKETBASE_DEBUG:-true}
       - POCKETBASE_PORT_NUMBER=3000
       - POCKETBASE_ENCRYPTION_KEY=${POCKETBASE_ENCRYPTION_KEY:-}
+      - POCKETBASE_ADMIN_EMAIL=${POCKETBASE_ADMIN_EMAIL:-admin@example.com}
+      - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD:-admin1234567}
     ports:
       - "3000:3000"
     volumes:

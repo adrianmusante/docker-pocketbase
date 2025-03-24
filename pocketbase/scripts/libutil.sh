@@ -4,6 +4,14 @@ is_boolean_yes() {
     grep -i -qE '^(1|true|yes)$' <(echo -n "${1-}")
 }
 
+is_debug_enabled() {
+  is_boolean_yes "${POCKETBASE_DEBUG:-false}"
+}
+
+is_app_initialized() {
+  test -e "${POCKETBASE_DATA_DIR:-}/data.db"
+}
+
 # Gets secret by strategy:
 # - ENVIRONMENT_VARIABLE
 # - KEY as filename at /var/run/secrets.
@@ -25,4 +33,34 @@ get_secret() {
     fi
   fi
   echo "$value"
+}
+
+# Logging functions
+
+RESET='\033[0m'
+RED='\033[38;5;1m'
+GREEN='\033[38;5;2m'
+YELLOW='\033[38;5;3m'
+MAGENTA='\033[38;5;5m'
+
+log() {
+  printf "%b\\n" "${MAGENTA}$(date "+%T.%2N")${RESET} ${*}" >&2
+}
+
+info() {
+  log "${GREEN}INFO${RESET} ==> ${*}"
+}
+
+warn() {
+  log "${YELLOW}WARN${RESET} ==> ${*}"
+}
+
+error() {
+  log "${RED}ERROR${RESET} ==> ${*}"
+}
+
+debug() {
+  if is_debug_enabled ; then
+    log "${MAGENTA}DEBUG${RESET} ==> ${*}"
+  fi
 }
