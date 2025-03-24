@@ -49,6 +49,9 @@ Available environment variables:
 - `POCKETBASE_DEBUG`: Verbose mode. Default: **false**
 - `POCKETBASE_PORT_NUMBER`: PocketBase&trade; server port number. Default: **8090**
 - `POCKETBASE_OPTS`: Additional options for bootstrap server. No defaults.
+- `POCKETBASE_ADMIN_EMAIL`: Admin user email. No defaults.
+- `POCKETBASE_ADMIN_PASSWORD`: Admin user password. No defaults.
+- `POCKETBASE_ADMIN_UPSERT`: If set to `true`, the admin user always is set from environment variables before the server starts. Otherwise, set to `false` for only create in the first startup. Default: **true**
 
 ##### Encryption
 

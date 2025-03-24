@@ -48,6 +48,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: pocketbase
+          build-args: |
+            BUILD_TAG=${{ steps.meta.outputs.version }}@${{ github.sha }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
           tags: ${{ steps.meta.outputs.tags }}
