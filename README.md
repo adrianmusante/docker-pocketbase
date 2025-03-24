@@ -50,7 +50,7 @@ Available environment variables:
 - `POCKETBASE_PORT_NUMBER`: PocketBase&trade; server port number. Default: **8090**
 - `POCKETBASE_OPTS`: Additional options for bootstrap server. No defaults.
 - `POCKETBASE_ADMIN_EMAIL`: Admin user email. No defaults.
-- `POCKETBASE_ADMIN_PASSWORD`: Admin user password. No defaults.
+- `POCKETBASE_ADMIN_PASSWORD`: Admin user password. It is possible to use Docker secrets to define the value or set the `POCKETBASE_ADMIN_PASSWORD_FILE` variable which will contain the path where the value is stored. No defaults.
 - `POCKETBASE_ADMIN_UPSERT`: If set to `true`, the admin user always is set from environment variables before the server starts. Otherwise, set to `false` for only create in the first startup. Default: **true**
 
 ##### Encryption
