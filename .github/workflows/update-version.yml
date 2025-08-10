@@ -1,0 +1,77 @@
+name: Update Runner Version
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  DOCKERFILE_PATH: pocketbase/Dockerfile
+  DOCKERFILE_VERSION_KEY: POCKETBASE_VERSION
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Git user
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - name: Get latest version
+        id: get-latest
+        run: |
+          version="$(curl -sSfL https://api.github.com/repos/pocketbase/pocketbase/releases/latest | json_pp | grep '"tag_name"' | cut -d '"' -f4 | tr -d '\\n' | tr -d 'v')"
+          echo "Latest version: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+      - name: Get current version
+        id: get-current
+        run: |
+          version="$(grep -Po "ARG $DOCKERFILE_VERSION_KEY=\K[0-9.]*" "$DOCKERFILE_PATH")"
+          echo "Current version: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+      - name: Check if update is needed
+        id: check
+        run: |
+          if [ "${{ steps.get-latest.outputs.version }}" = "${{ steps.get-current.outputs.version }}" ]; then
+            echo "up_to_date=true" >> $GITHUB_OUTPUT
+          else
+            echo "up_to_date=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Pull request metadata
+        if: steps.check.outputs.up_to_date == 'false'
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${{ steps.get-latest.outputs.version }}"
+          title="Update $DOCKERFILE_VERSION_KEY to $version"
+          prs=$(gh pr list --search "$title" --json title | jq length)
+          if [ "$prs" -gt 0 ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+          echo "title=$title" >> $GITHUB_OUTPUT
+          echo "body=Automated update of $DOCKERFILE_VERSION_KEY to $version" >> $GITHUB_OUTPUT
+          echo "head_branch=update/v$version" >> $GITHUB_OUTPUT
+          echo "base_branch=main" >> $GITHUB_OUTPUT
+      - name: Create Pull Request
+        if: steps.pr.outputs.exists == 'false' && steps.check.outputs.up_to_date == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${{ steps.get-latest.outputs.version }}"
+          branch="${{ steps.pr.outputs.head_branch }}"
+          git checkout -b "$branch"
+          sed -i "s|ARG $DOCKERFILE_VERSION_KEY=.*|ARG $DOCKERFILE_VERSION_KEY=$version|" "$DOCKERFILE_PATH"
+          git commit -am "Update $DOCKERFILE_VERSION_KEY to $version"
+          git push origin "$branch"
+          gh pr create --title "${{ steps.pr.outputs.title }}" \
+            --body "${{ steps.pr.outputs.body }}" \
+            --base "${{ steps.pr.outputs.base_branch }}" --head "$branch"
