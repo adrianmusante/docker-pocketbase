@@ -75,7 +75,7 @@ jobs:
           git checkout -b "$branch"
           sed -i "s|ARG $DOCKERFILE_VERSION_KEY=.*|ARG $DOCKERFILE_VERSION_KEY=$version|" "$DOCKERFILE_PATH"
           sed -i -E "s|-\s*\[\`[0-9]+\`,\s*\`[0-9.]+\`,\s*\`latest\` \(${DOCKERFILE_PATH}\)\]|- [\`$(echo "$version" | cut -d'.' -f1,1)\`, \`$(echo "$version" | cut -d'.' -f1,2)\`, \`latest\` (${DOCKERFILE_PATH})]|" README.md
-          git commit -am "Update $DOCKERFILE_VERSION_KEY to $version"
+          git commit -am "Update version to $version"
           git push origin "$branch"
           gh pr create --title "${{ steps.pr.outputs.title }}" \
             --body "${{ steps.pr.outputs.body }}" \
