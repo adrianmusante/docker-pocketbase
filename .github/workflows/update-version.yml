@@ -26,7 +26,11 @@ jobs:
       - name: Get latest version
         id: get-latest
         run: |
-          version="$(curl -sSfL https://api.github.com/repos/pocketbase/pocketbase/releases/latest | json_pp | grep '"tag_name"' | cut -d '"' -f4 | tr -d '\\n' | tr -d 'v')"
+          version="$(curl -sSfL -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/pocketbase/pocketbase/releases/latest | json_pp | grep '"tag_name"' | cut -d '"' -f4 | tr -d '\\n' | tr -d 'v')"
+          if [ -z "$version" ]; then
+            echo "Failed to fetch latest version" >&2
+            exit 1
+          fi
           echo "Latest version: $version"
           echo "version=$version" >> $GITHUB_OUTPUT
       - name: Get current version
