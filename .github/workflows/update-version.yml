@@ -1,4 +1,4 @@
-name: Update Runner Version
+name: Update Version
 
 on:
   schedule:
