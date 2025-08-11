@@ -10,6 +10,7 @@ permissions:
   pull-requests: write
 
 env:
+  DEPENDENCY_NAME: PocketBase
   DOCKERFILE_PATH: pocketbase/Dockerfile
   DOCKERFILE_VERSION_KEY: POCKETBASE_VERSION
 
@@ -54,7 +55,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version="${{ steps.get-latest.outputs.version }}"
-          title="Update $DOCKERFILE_VERSION_KEY to $version"
+          title="Update $DEPENDENCY_NAME to v$version"
           prs=$(gh pr list --search "$title" --json title | jq length)
           if [ "$prs" -gt 0 ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -62,7 +63,7 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
           echo "title=$title" >> $GITHUB_OUTPUT
-          echo "body=Automated update of $DOCKERFILE_VERSION_KEY to $version" >> $GITHUB_OUTPUT
+          echo "body=Bumps $DEPENDENCY_NAME to version $version" >> $GITHUB_OUTPUT
           echo "head_branch=update/v$version" >> $GITHUB_OUTPUT
           echo "base_branch=main" >> $GITHUB_OUTPUT
       - name: Create Pull Request
