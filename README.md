@@ -13,7 +13,7 @@ The recommended way to get the PocketBase&trade; Docker Image is to pull the pre
 
 To use a specific version, you can pull a versioned tag. You can view the [list of available versions](https://hub.docker.com/r/adrianmusante/pocketbase/tags/) in the Docker Hub Registry.
 
-- [`0`, `0.33`, `latest` (pocketbase/Dockerfile)](https://github.com/adrianmusante/docker-pocketbase/blob/main/pocketbase/Dockerfile)
+- [`0`, `0.34`, `latest` (pocketbase/Dockerfile)](https://github.com/adrianmusante/docker-pocketbase/blob/main/pocketbase/Dockerfile)
 
 
 ## Configuration
