@@ -1,0 +1,27 @@
+name: PR - Request Reviewer
+
+on:
+  pull_request:
+    types: [opened]
+
+env:
+  PR_DEFAULT_REVIEWER: ${{ vars.PR_DEFAULT_REVIEWER }}
+
+jobs:
+  add-reviewer:
+    runs-on: ubuntu-latest
+    if: env.PR_DEFAULT_REVIEWER != ''
+    steps:
+      - name: Check for reviewers
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          reviewers=$(gh pr view ${{ github.event.pull_request.number }} --json reviewRequests --jq '.reviewRequests | length')
+          echo "reviewers=$reviewers" >> $GITHUB_OUTPUT
+      - name: Request review
+        if: steps.check.outputs.reviewers == '0' && env.PR_DEFAULT_REVIEWER != github.event.pull_request.user.login
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr review --request "$PR_DEFAULT_REVIEWER" ${{ github.event.pull_request.number }}
