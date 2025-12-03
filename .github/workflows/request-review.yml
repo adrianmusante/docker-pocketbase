@@ -4,13 +4,10 @@ on:
   pull_request:
     types: [opened]
 
-env:
-  PR_DEFAULT_REVIEWER: ${{ vars.PR_DEFAULT_REVIEWER }}
-
 jobs:
   add-reviewer:
     runs-on: ubuntu-latest
-    if: env.PR_DEFAULT_REVIEWER != ''
+    if: vars.PR_DEFAULT_REVIEWER != ''
     steps:
       - name: Check for reviewers
         id: check
@@ -20,8 +17,8 @@ jobs:
           reviewers=$(gh pr view ${{ github.event.pull_request.number }} --json reviewRequests --jq '.reviewRequests | length')
           echo "reviewers=$reviewers" >> $GITHUB_OUTPUT
       - name: Request review
-        if: steps.check.outputs.reviewers == '0' && env.PR_DEFAULT_REVIEWER != github.event.pull_request.user.login
+        if: steps.check.outputs.reviewers == '0' && vars.PR_DEFAULT_REVIEWER != github.event.pull_request.user.login
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr review --request "$PR_DEFAULT_REVIEWER" ${{ github.event.pull_request.number }}
+          gh pr review --request "${{ vars.PR_DEFAULT_REVIEWER }}" ${{ github.event.pull_request.number }}
