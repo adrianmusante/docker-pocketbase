@@ -2,23 +2,26 @@ name: PR - Request Reviewer
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened,reopened,ready_for_review]
 
 jobs:
   add-reviewer:
     runs-on: ubuntu-latest
-    if: vars.PR_DEFAULT_REVIEWER != ''
+    if: vars.PR_DEFAULT_REVIEWER != '' && !github.event.pull_request.draft
     steps:
       - name: Check for reviewers
         id: check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          reviewers=$(gh pr view ${{ github.event.pull_request.number }} --json reviewRequests --jq '.reviewRequests | length')
-          echo "reviewers=$reviewers" >> $GITHUB_OUTPUT
+          requested=$(gh pr view -R '${{github.repository}}' ${{ github.event.pull_request.number }} --json reviewRequests --jq '.reviewRequests | length')
+          completed=$(gh pr view -R '${{github.repository}}' ${{ github.event.pull_request.number }} --json reviews --jq '.reviews | length')
+          total=$((requested + completed))
+          echo "total_reviews=$total" >> $GITHUB_OUTPUT
       - name: Request review
-        if: steps.check.outputs.reviewers == '0' && vars.PR_DEFAULT_REVIEWER != github.event.pull_request.user.login
+        if: steps.check.outputs.total_reviews == '0' && vars.PR_DEFAULT_REVIEWER != github.event.pull_request.user.login
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_DEFAULT_REVIEWER: ${{ vars.PR_DEFAULT_REVIEWER }}
         run: |
-          gh pr review --request "${{ vars.PR_DEFAULT_REVIEWER }}" ${{ github.event.pull_request.number }}
+          gh pr edit -R '${{github.repository}}' ${{ github.event.pull_request.number }} --add-reviewer "$PR_DEFAULT_REVIEWER"
