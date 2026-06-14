@@ -105,7 +105,7 @@ jobs:
         env:
           RELEASE_BODY: ${{ steps.release_body.outputs.body }}
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.BOT_GH_TOKEN != '' && secrets.BOT_GH_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const releaseBody = (process.env.RELEASE_BODY || '').trim();
             const releaseTag = '${{ steps.version.outputs.release_tag }}';

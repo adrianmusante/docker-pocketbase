@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.BOT_GH_TOKEN != '' && secrets.BOT_GH_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Configure Git user
         run: |
           git config user.name github-actions[bot]
@@ -38,7 +40,7 @@ jobs:
       - name: Get latest version
         id: get-latest
         run: |
-          version="$(curl -sSfL -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/pocketbase/pocketbase/releases/latest | json_pp | grep '"tag_name"' | cut -d '"' -f4 | tr -d '\\n' | tr -d 'v')"
+          version="$(curl -sSfL -H 'Authorization: Bearer ${{ secrets.BOT_GH_TOKEN != '' && secrets.BOT_GH_TOKEN || secrets.GITHUB_TOKEN }}' https://api.github.com/repos/pocketbase/pocketbase/releases/latest | json_pp | grep '"tag_name"' | cut -d '"' -f4 | tr -d '\\n' | tr -d 'v')"
           if [ -z "$version" ]; then
             echo "Failed to fetch latest version" >&2
             exit 1
@@ -68,7 +70,7 @@ jobs:
         if: steps.check.outputs.up_to_date == 'false'
         id: pr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BOT_GH_TOKEN != '' && secrets.BOT_GH_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           version="${{ steps.get-latest.outputs.version }}"
           title="Update $DEPENDENCY_NAME to v$version (os: ${{ steps.get-latest.outputs.os_version }})"
@@ -85,7 +87,7 @@ jobs:
       - name: Create Pull Request
         if: steps.pr.outputs.exists == 'false' && steps.check.outputs.up_to_date == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BOT_GH_TOKEN != '' && secrets.BOT_GH_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           version="${{ steps.get-latest.outputs.version }}"
           branch="${{ steps.pr.outputs.head_branch }}"
