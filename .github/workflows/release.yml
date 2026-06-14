@@ -18,8 +18,8 @@ permissions:
   contents: write
 
 env:
-  DOCKERFILE_PATH: runner/Dockerfile
-  DOCKERFILE_VERSION_KEY: RUNNER_VERSION
+  DOCKERFILE_PATH: pocketbase/Dockerfile
+  DOCKERFILE_VERSION_KEY: POCKETBASE_VERSION
   RELEASE_TAG_PREFIX: v
 
 jobs:
