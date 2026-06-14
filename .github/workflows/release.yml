@@ -39,15 +39,18 @@ jobs:
           set -euo pipefail
 
           get_version() { grep "ARG $1=" "$DOCKERFILE_PATH" | cut -d '=' -f2 | tr -d '[:space:]'; }
-          version="$(get_version "$DOCKERFILE_VERSION_KEY")"
+          raw_version="$(get_version "$DOCKERFILE_VERSION_KEY")"
 
-          if [ -z "$version" ]; then
+          if [ -z "$raw_version" ]; then
             echo "$DOCKERFILE_VERSION_KEY was not found in $DOCKERFILE_PATH" >&2
             exit 1
           fi
 
-          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "$DOCKERFILE_VERSION_KEY must follow semver format X.Y.Z. Found: $version" >&2
+          # Keep only the first three numeric segments (X.Y.Z), dropping build/release suffixes.
+          if [[ "$raw_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([.-].*)?$ ]]; then
+            version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+          else
+            echo "$DOCKERFILE_VERSION_KEY must include a semver base X.Y.Z. Found: $raw_version" >&2
             exit 1
           fi
 
