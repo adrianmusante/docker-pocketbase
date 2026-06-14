@@ -1,0 +1,143 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_body:
+        description: Optional Markdown body. Leave empty to auto-generate release notes.
+        required: false
+        type: string
+        default: ""
+      release_body_base64:
+        description: Optional base64-encoded Markdown body for multiline content.
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  DOCKERFILE_PATH: pocketbase/Dockerfile
+  DOCKERFILE_VERSION_KEY: POCKETBASE_VERSION
+  RELEASE_TAG_PREFIX: v
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          get_version() { grep "ARG $1=" "$DOCKERFILE_PATH" | cut -d '=' -f2 | tr -d '[:space:]'; }
+          version="$(get_version "$DOCKERFILE_VERSION_KEY")"
+
+          if [ -z "$version" ]; then
+            echo "$DOCKERFILE_VERSION_KEY was not found in $DOCKERFILE_PATH" >&2
+            exit 1
+          fi
+
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "$DOCKERFILE_VERSION_KEY must follow semver format X.Y.Z. Found: $version" >&2
+            exit 1
+          fi
+
+          major="${version%%.*}"
+          rest="${version#*.}"
+          minor="${rest%%.*}"
+          patch="${version##*.}"
+
+          candidate="${RELEASE_TAG_PREFIX}${version}"
+          incremented="false"
+
+          while git ls-remote --exit-code --tags origin "refs/tags/${candidate}" >/dev/null 2>&1; do
+            patch=$((patch + 1))
+            candidate="${RELEASE_TAG_PREFIX}${major}.${minor}.${patch}"
+            incremented="true"
+          done
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$candidate" >> "$GITHUB_OUTPUT"
+          echo "tag_incremented=$incremented" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare release body
+        id: release_body
+        shell: bash
+        env:
+          RELEASE_BODY: ${{ github.event.inputs.release_body }}
+          RELEASE_BODY_BASE64: ${{ github.event.inputs.release_body_base64 }}
+        run: |
+          set -euo pipefail
+
+          body=""
+          body_mode="auto"
+
+          if [ -n "${RELEASE_BODY_BASE64//[[:space:]]/}" ]; then
+            body="$(printf '%s' "$RELEASE_BODY_BASE64" | base64 --decode)"
+            body_mode="base64"
+          elif [ -n "${RELEASE_BODY//[[:space:]]/}" ]; then
+            body="$RELEASE_BODY"
+            body_mode="input"
+          fi
+
+          {
+            echo "body<<EOF"
+            printf '%s\n' "$body"
+            echo "EOF"
+            echo "body_mode=$body_mode"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/github-script@v9
+        env:
+          RELEASE_BODY: ${{ steps.release_body.outputs.body }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const releaseBody = (process.env.RELEASE_BODY || '').trim();
+            const releaseTag = '${{ steps.version.outputs.release_tag }}';
+
+            const payload = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: releaseTag,
+              name: releaseTag,
+              draft: false,
+              prerelease: false,
+            };
+
+            if (releaseBody.length > 0) {
+              payload.body = releaseBody;
+              payload.generate_release_notes = false;
+            } else {
+              payload.generate_release_notes = true;
+            }
+
+            const release = await github.rest.repos.createRelease(payload);
+            core.setOutput('html_url', release.data.html_url);
+            core.setOutput('id', String(release.data.id));
+
+      - name: Publish release summary
+        shell: bash
+        run: |
+          {
+            echo "## Release created"
+            echo ""
+            echo "- Base $DOCKERFILE_VERSION_KEY: \`${{ steps.version.outputs.version }}\`"
+            echo "- Published tag: \`${{ steps.version.outputs.release_tag }}\`"
+            echo "- Tag incremented: \`${{ steps.version.outputs.tag_incremented }}\`"
+            echo "- Body mode: \`${{ steps.release_body.outputs.body_mode }}\`"
+            echo "- Release ID: \`${{ steps.create_release.outputs.id }}\`"
+            echo "- URL: ${{ steps.create_release.outputs.html_url }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
