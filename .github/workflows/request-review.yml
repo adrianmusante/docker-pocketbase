@@ -4,15 +4,18 @@ on:
   pull_request:
     types: [opened,reopened,ready_for_review]
 
+permissions:
+  pull-requests: write
+
 jobs:
   add-reviewer:
     runs-on: ubuntu-latest
     if: vars.PR_DEFAULT_REVIEWER != '' && !github.event.pull_request.draft
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check for reviewers
         id: check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           requested=$(gh pr view -R '${{github.repository}}' ${{ github.event.pull_request.number }} --json reviewRequests --jq '.reviewRequests | length')
           completed=$(gh pr view -R '${{github.repository}}' ${{ github.event.pull_request.number }} --json reviews --jq '.reviews | length')
@@ -21,7 +24,6 @@ jobs:
       - name: Request review
         if: steps.check.outputs.total_reviews == '0' && vars.PR_DEFAULT_REVIEWER != github.event.pull_request.user.login
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_DEFAULT_REVIEWER: ${{ vars.PR_DEFAULT_REVIEWER }}
         run: |
           gh pr edit -R '${{github.repository}}' ${{ github.event.pull_request.number }} --add-reviewer "$PR_DEFAULT_REVIEWER"
