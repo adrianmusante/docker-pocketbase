@@ -82,16 +82,15 @@ jobs:
         env:
           RELEASE_BODY: ${{ github.event.inputs.release_body }}
           RELEASE_BODY_BASE64: ${{ github.event.inputs.release_body_base64 }}
-          RAW_VERSION: ${{ steps.version.outputs.raw_version }}
           VERSION: ${{ steps.version.outputs.version }}
-          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          TAG_INCREMENTED: ${{ steps.version.outputs.tag_incremented }}
+          RELEASE_TAG_PREFIX: ${{ env.RELEASE_TAG_PREFIX }}
         run: |
           set -euo pipefail
 
           extra=""
           body=""
           body_mode="auto"
-          tag_version="${RELEASE_TAG#${RELEASE_TAG_PREFIX}}"
 
           if [ -n "${RELEASE_BODY_BASE64//[[:space:]]/}" ]; then
             extra="$(printf '%s' "$RELEASE_BODY_BASE64" | base64 --decode)"
@@ -101,7 +100,7 @@ jobs:
             body_mode="input"
           fi
 
-          if [ "$tag_version" != "$RAW_VERSION" ]; then
+          if [ "$TAG_INCREMENTED" = "true" ]; then
             increment_note="_Published tag was incremented because ${RELEASE_TAG_PREFIX}${VERSION} already exists._"
             if [ -n "$extra" ]; then
               body="$(printf '%s\n\n%s' "$increment_note" "$extra")"
@@ -133,9 +132,10 @@ jobs:
             const bodyMode = process.env.BODY_MODE || 'auto';
             const releaseTag = '${{ steps.version.outputs.release_tag }}';
             const rawVersion = '${{ steps.version.outputs.raw_version }}';
+            const version = '${{ steps.version.outputs.version }}';
             const dependencyName = process.env.DEPENDENCY_NAME;
             const tagVersion = releaseTag.replace(/^v/, '');
-            const releaseName = tagVersion === rawVersion
+            const releaseName = tagVersion === version
               ? releaseTag
               : `${releaseTag} (${dependencyName}: v${rawVersion})`;
 
