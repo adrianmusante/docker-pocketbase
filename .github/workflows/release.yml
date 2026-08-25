@@ -18,6 +18,7 @@ permissions:
   contents: write
 
 env:
+  DEPENDENCY_NAME: PocketBase
   DOCKERFILE_PATH: pocketbase/Dockerfile
   DOCKERFILE_VERSION_KEY: POCKETBASE_VERSION
   RELEASE_TAG_PREFIX: v
@@ -70,6 +71,7 @@ jobs:
             incremented="true"
           done
 
+          echo "raw_version=$raw_version" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "release_tag=$candidate" >> "$GITHUB_OUTPUT"
           echo "tag_incremented=$incremented" >> "$GITHUB_OUTPUT"
@@ -80,18 +82,34 @@ jobs:
         env:
           RELEASE_BODY: ${{ github.event.inputs.release_body }}
           RELEASE_BODY_BASE64: ${{ github.event.inputs.release_body_base64 }}
+          RAW_VERSION: ${{ steps.version.outputs.raw_version }}
+          VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
         run: |
           set -euo pipefail
 
+          extra=""
           body=""
           body_mode="auto"
+          tag_version="${RELEASE_TAG#${RELEASE_TAG_PREFIX}}"
 
           if [ -n "${RELEASE_BODY_BASE64//[[:space:]]/}" ]; then
-            body="$(printf '%s' "$RELEASE_BODY_BASE64" | base64 --decode)"
+            extra="$(printf '%s' "$RELEASE_BODY_BASE64" | base64 --decode)"
             body_mode="base64"
           elif [ -n "${RELEASE_BODY//[[:space:]]/}" ]; then
-            body="$RELEASE_BODY"
+            extra="$RELEASE_BODY"
             body_mode="input"
+          fi
+
+          if [ "$tag_version" != "$RAW_VERSION" ]; then
+            increment_note="_Published tag was incremented because ${RELEASE_TAG_PREFIX}${VERSION} already exists._"
+            if [ -n "$extra" ]; then
+              body="$(printf '%s\n\n%s' "$increment_note" "$extra")"
+            else
+              body="$increment_note"
+            fi
+          else
+            body="$extra"
           fi
 
           {
@@ -106,26 +124,33 @@ jobs:
         uses: actions/github-script@v9
         env:
           RELEASE_BODY: ${{ steps.release_body.outputs.body }}
+          BODY_MODE: ${{ steps.release_body.outputs.body_mode }}
+          DEPENDENCY_NAME: ${{ env.DEPENDENCY_NAME }}
         with:
           github-token: ${{ env.GH_TOKEN }}
           script: |
             const releaseBody = (process.env.RELEASE_BODY || '').trim();
+            const bodyMode = process.env.BODY_MODE || 'auto';
             const releaseTag = '${{ steps.version.outputs.release_tag }}';
+            const rawVersion = '${{ steps.version.outputs.raw_version }}';
+            const dependencyName = process.env.DEPENDENCY_NAME;
+            const tagVersion = releaseTag.replace(/^v/, '');
+            const releaseName = tagVersion === rawVersion
+              ? releaseTag
+              : `${releaseTag} (${dependencyName}: v${rawVersion})`;
 
             const payload = {
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: releaseTag,
-              name: releaseTag,
+              name: releaseName,
               draft: false,
               prerelease: false,
+              generate_release_notes: bodyMode === 'auto',
             };
 
             if (releaseBody.length > 0) {
               payload.body = releaseBody;
-              payload.generate_release_notes = false;
-            } else {
-              payload.generate_release_notes = true;
             }
 
             const release = await github.rest.repos.createRelease(payload);
@@ -138,6 +163,7 @@ jobs:
           {
             echo "## Release created"
             echo ""
+            echo "- $DEPENDENCY_NAME: \`${{ steps.version.outputs.raw_version }}\`"
             echo "- Base $DOCKERFILE_VERSION_KEY: \`${{ steps.version.outputs.version }}\`"
             echo "- Published tag: \`${{ steps.version.outputs.release_tag }}\`"
             echo "- Tag incremented: \`${{ steps.version.outputs.tag_incremented }}\`"
