@@ -21,6 +21,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -72,3 +76,41 @@ jobs:
           repository: ${{ secrets.DOCKER_HUB_USERNAME }}/pocketbase
           readme-filepath: ./README.md
           enable-url-completion: false
+      - name: Comment PR with image
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          SHA: ${{ github.sha }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          marker='<!-- docker-pr-image -->'
+
+          # Minimize previous comments with the same marker
+          ids=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"${marker}\")) | .node_id")
+          for id in $ids; do
+            gh api graphql -f query='
+              mutation($id: ID!) {
+                minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) {
+                  minimizedComment { isMinimized }
+                }
+              }' -f id="$id"
+          done
+
+          pull_cmds=$(printf '%s\n' "$TAGS" | sed '/^$/d' | sed 's/^/docker pull /')
+
+          {
+            echo "$marker"
+            echo "### Docker image ready"
+            echo
+            echo "**Version:** \`${VERSION}@${SHA}\`"
+            echo
+            echo '```bash'
+            printf '%s\n' "$pull_cmds"
+            echo '```'
+          } > /tmp/docker-pr-image-comment.md
+
+          gh pr comment -R "$REPO" "$PR_NUMBER" --body-file /tmp/docker-pr-image-comment.md
