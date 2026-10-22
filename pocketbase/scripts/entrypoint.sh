@@ -36,4 +36,4 @@ if [ -n "$POCKETBASE_ADMIN_EMAIL" ] && [ -n "$POCKETBASE_ADMIN_PASSWORD" ]; then
   fi
 fi
 
-exec pocketbase serve --http=0.0.0.0:$POCKETBASE_PORT_NUMBER "$@"
+exec pocketbase serve --http=$POCKETBASE_LISTEN_ADDRESS:$POCKETBASE_PORT_NUMBER "$@"
