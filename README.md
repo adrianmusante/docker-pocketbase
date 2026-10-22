@@ -47,6 +47,7 @@ Available environment variables:
 ##### General configuration
 
 - `POCKETBASE_DEBUG`: Verbose mode. Default: **false**
+- `POCKETBASE_LISTEN_ADDRESS`: TCP address/IP for the HTTP server (`--http`). Default: **0.0.0.0**
 - `POCKETBASE_PORT_NUMBER`: PocketBase&trade; server port number. Default: **8090**
 - `POCKETBASE_OPTS`: Additional options for bootstrap server. No defaults.
 - `POCKETBASE_ADMIN_EMAIL`: Admin user email. No defaults.
