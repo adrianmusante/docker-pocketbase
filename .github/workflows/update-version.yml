@@ -42,7 +42,9 @@ jobs:
       - name: Get latest version
         id: get-latest
         run: |
-          version="$(curl -sSfL -H 'Authorization: Bearer ${{ env.GH_TOKEN }}' https://api.github.com/repos/pocketbase/pocketbase/releases/latest | json_pp | grep '"tag_name"' | cut -d '"' -f4 | tr -d '\\n' | tr -d 'v')"
+          version="$(curl -sSfL 'https://ganigeorgiev.com/meta/pocketbase/pocketbase/releases.atom?channel=default' \
+            | sed -n 's/.*<title>v\([0-9][0-9.]*\) release<\/title>.*/\1/p' \
+            | head -1)"
           if [ -z "$version" ]; then
             echo "Failed to fetch latest version" >&2
             exit 1

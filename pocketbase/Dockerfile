@@ -1,4 +1,4 @@
-ARG POCKETBASE_VERSION=0.40.6
+ARG POCKETBASE_VERSION=0.41.0
 ARG ALPINE_VERSION=3.24.4
 ARG BUILD_DIR=/pb_build
 ARG BUILD_TAG
@@ -20,7 +20,7 @@ RUN case ${TARGETPLATFORM} in \
          "linux/arm64")  PACKAGE_PLATFORM=linux_arm64  ;; \
          "linux/arm/v7") PACKAGE_PLATFORM=linux_armv7  ;; \
     esac \
-    && curl -fsSL -o /tmp/pocketbase.zip https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_${PACKAGE_PLATFORM}.zip \
+    && curl -fsSL -o /tmp/pocketbase.zip https://ganigeorgiev.com/meta/pocketbase/pocketbase/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_${PACKAGE_PLATFORM}.zip \
     && unzip /tmp/pocketbase.zip -d $BUILD_DIR/
 
 
