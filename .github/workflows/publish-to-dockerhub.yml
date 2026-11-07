@@ -63,10 +63,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Explicit scopes: main populates pocketbase-refs/heads/main (mode=max).
+          # PRs/tags always import that scope so unchanged stages hit cache.
+          # Non-main exports use mode=min to avoid re-uploading intermediate layers.
           cache-from: |
-            type=gha
-            type=gha,scope=main
-          cache-to: type=gha,mode=max
+            type=gha,scope=pocketbase-${{ github.ref }}
+            type=gha,scope=pocketbase-refs/heads/main
+          cache-to: type=gha,mode=${{ github.ref == 'refs/heads/main' && 'max' || 'min' }},scope=pocketbase-${{ github.ref }}
       - name: Update DockerHub description
         if: startsWith(github.ref, 'refs/tags/v')
         uses: peter-evans/dockerhub-description@v5
